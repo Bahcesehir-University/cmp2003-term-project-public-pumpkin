@@ -60,7 +60,7 @@ struct TripAnalyzer::Impl {
                     dA = c3 + 1;
                     dB = c4;
                 } else {
-                    // 4-column format or malformed: try column 4 as PickupTime
+                    // 4-column format where PickupTime is the last column (column 4)
                     dA = c3 + 1;
                     dB = end;
                 }
@@ -148,7 +148,7 @@ void TripAnalyzer::ingestStdin() {
 
 void TripAnalyzer::ingestFile(const std::string& filename) {
     if (!pImpl) pImpl = new Impl();
-    std::ifstream in(filename);
+    std::ifstream in(filename, std::ios::in);
     if (!in) throw std::runtime_error("Failed to open file: " + filename);
     pImpl->ingestFromStream(in);
 }
