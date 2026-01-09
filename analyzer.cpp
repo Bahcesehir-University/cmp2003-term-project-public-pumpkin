@@ -28,31 +28,44 @@ struct TripAnalyzer::Impl {
         return true;
     }
 
-    void ingest() {
-        ios::sync_with_stdio(false);
-        cin.tie(nullptr);
-
+    void ingestFromStream(istream& in) {
         zoneId.reserve(4096);
 
         string line;
-        while (getline(cin, line)) {
+        while (getline(in, line)) {
             const char* s = line.c_str();
             const char* end = s + line.size();
 
             const char* c1 = (const char*)memchr(s, ',', end - s); if (!c1) continue;
             const char* c2 = (const char*)memchr(c1+1, ',', end - (c1+1)); if (!c2) continue;
-            const char* c3 = (const char*)memchr(c2+1, ',', end - (c2+1)); if (!c3) continue;
-            const char* c4 = (const char*)memchr(c3+1, ',', end - (c3+1)); if (!c4) continue;
-            const char* c5 = (const char*)memchr(c4+1, ',', end - (c4+1)); if (!c5) continue;
-            (void)c5;
-
+            const char* c3 = (const char*)memchr(c2+1, ',', end - (c2+1));
+            
+            // Extract PickupZoneID (always column 2)
             const char* pA = c1 + 1;
             const char* pB = c2;
             trimSpan(pA, pB);
             if (pA >= pB) continue;
 
-            const char* dA = c3 + 1;
-            const char* dB = c4;
+            // Extract PickupTime - it could be column 3 or column 4 depending on format
+            const char* dA, *dB;
+            if (!c3) {
+                // 3-column format: PickupTime is column 3 (no comma after it)
+                dA = c2 + 1;
+                dB = end;
+            } else {
+                // Check if there's a 4th column (6-column format)
+                const char* c4 = (const char*)memchr(c3+1, ',', end - (c3+1));
+                if (c4) {
+                    // 6-column format: PickupTime is column 4
+                    dA = c3 + 1;
+                    dB = c4;
+                } else {
+                    // 4-column format where PickupTime is the last column (column 4)
+                    dA = c3 + 1;
+                    dB = end;
+                }
+            }
+            
             trimSpan(dA, dB);
             if (dA >= dB) continue;
 
@@ -76,6 +89,12 @@ struct TripAnalyzer::Impl {
             zoneCount[id]++;
             zoneHourCount[id][hour]++;
         }
+    }
+
+    void ingest() {
+        ios::sync_with_stdio(false);
+        cin.tie(nullptr);
+        ingestFromStream(cin);
     }
 
     vector<ZoneCount> topZones(int K) {
@@ -125,6 +144,13 @@ struct TripAnalyzer::Impl {
 void TripAnalyzer::ingestStdin() {
     if (!pImpl) pImpl = new Impl();
     pImpl->ingest();
+}
+
+void TripAnalyzer::ingestFile(const std::string& filename) {
+    if (!pImpl) pImpl = new Impl();
+    std::ifstream in(filename, std::ios::in);
+    if (!in) throw std::runtime_error("Failed to open file: " + filename);
+    pImpl->ingestFromStream(in);
 }
 
 vector<ZoneCount> TripAnalyzer::topZones(int K) {

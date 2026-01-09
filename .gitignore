@@ -1,0 +1,10 @@
+# Build artifacts
+app
+tests
+*.o
+*.a
+
+# Temporary files
+*.swp
+*.swo
+*~
