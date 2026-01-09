@@ -17,6 +17,7 @@ struct SlotCount {
 class TripAnalyzer {
 public:
     void ingestStdin();
+    void ingestFile(const std::string& filename);
     std::vector<ZoneCount> topZones(int K = 10);
     std::vector<SlotCount> topBusySlots(int K = 10);
 
